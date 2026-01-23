@@ -1460,6 +1460,23 @@ def update_preview(selected_label, state):
             gr.update(visible=False),
             gr.update(visible=False),
         )
+    
+    # 1.5. Validate selected_label is in display_map (choices)
+    # This prevents Gradio errors when value is not in choices
+    if selected_label not in state.get("display_map", {}):
+        # Reset to first available choice or None
+        choices = list(state.get("display_map", {}).keys())
+        selected_label = choices[0] if choices else None
+        if not selected_label:
+            return (
+                None,
+                None,
+                None,
+                None,
+                gr.update(visible=False),
+                gr.update(visible=False),
+                gr.update(visible=False),
+            )
 
     # 2. Get the file path for the PDF viewer
     # This works for both uploaded files and translated files
@@ -1557,6 +1574,10 @@ def on_file_upload(files, state):
         new_choices[0] if new_choices else (all_choices[0] if all_choices else None)
     )
 
+    # Ensure default_value is in choices or None to avoid Gradio errors
+    if default_value and default_value not in all_choices:
+        default_value = all_choices[0] if all_choices else None
+
     # Build uploaded files markdown view
     uploaded_files = state["uploaded_files"]
     if uploaded_files:
@@ -1568,7 +1589,7 @@ def on_file_upload(files, state):
         uploaded_view_update = gr.update(value="", visible=False)
 
     return (
-        gr.update(choices=all_choices, value=default_value, visible=True),
+        gr.update(choices=all_choices, value=default_value, visible=bool(all_choices)),
         state,
         uploaded_view_update,
     )
@@ -1720,11 +1741,16 @@ def on_file_input_change(files, state, selected_label):
     choices = list(state["display_map"].keys())
 
     # If current preview was removed, pick a safe fallback; otherwise keep selection.
+    # Ensure selector_value is always in choices or None to avoid Gradio errors
     if selected_label in removed:
         selected_label = None
-    if selected_label and selected_label in state["display_map"]:
+    if selected_label and selected_label in choices:
         selector_value = selected_label
     else:
+        selector_value = choices[0] if choices else None
+
+    # Always ensure value is in choices or None
+    if selector_value and selector_value not in choices:
         selector_value = choices[0] if choices else None
 
     selector_update = (
@@ -2021,6 +2047,92 @@ custom_css = """
         display: block !important;
         margin: 0 auto !important;
         /* Canvas不支持object-fit，需要通过JS动态缩放，但CSS确保不超出边界 */
+        background: #ffffff !important;  /* 浅色模式下保持白色 */
+        position: relative !important;
+    }
+
+    /* 深色模式下PDF预览区域背景保持深色 */
+    .dark .pdf-preview-fixed,
+    [data-theme="dark"] .pdf-preview-fixed,
+    body.dark .pdf-preview-fixed {
+        background: var(--block-background-fill, #1e1e1e) !important;
+    }
+
+    /* 深色模式下PDF容器背景保持透明，让深色背景显示 */
+    .dark .pdf-preview-fixed .pdf-canvas,
+    [data-theme="dark"] .pdf-preview-fixed .pdf-canvas,
+    body.dark .pdf-preview-fixed .pdf-canvas {
+        background: transparent !important;
+    }
+
+    /* 深色模式下PDF canvas使用柔和的浅灰色背景，不那么突兀 */
+    .dark .pdf-preview-fixed canvas,
+    [data-theme="dark"] .pdf-preview-fixed canvas,
+    body.dark .pdf-preview-fixed canvas {
+        background: #f5f5f5 !important;  /* 浅灰色，比纯白柔和 */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;  /* 更柔和的阴影和边框 */
+        border-radius: 4px !important;  /* 圆角使过渡更自然 */
+        padding: 8px !important;  /* 内边距让背景稍微大一点 */
+        box-sizing: content-box !important;  /* 确保padding不影响canvas大小 */
+    }
+
+    /* 深色模式下iframe和embed使用相同处理 */
+    .dark .pdf-preview-fixed iframe,
+    .dark .pdf-preview-fixed embed,
+    [data-theme="dark"] .pdf-preview-fixed iframe,
+    [data-theme="dark"] .pdf-preview-fixed embed,
+    body.dark .pdf-preview-fixed iframe,
+    body.dark .pdf-preview-fixed embed {
+        background: #f5f5f5 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+        border-radius: 4px !important;
+    }
+
+    /* 确保PDF渲染容器在深色模式下背景透明 */
+    .dark .pdf-preview-fixed > div,
+    .dark .pdf-preview-fixed > div > div,
+    [data-theme="dark"] .pdf-preview-fixed > div,
+    [data-theme="dark"] .pdf-preview-fixed > div > div,
+    body.dark .pdf-preview-fixed > div,
+    body.dark .pdf-preview-fixed > div > div {
+        background: transparent !important;
+    }
+
+    /* 通用深色模式检测 */
+    [class*="dark"] .pdf-preview-fixed canvas,
+    [class*="dark"] .pdf-preview-fixed iframe,
+    [class*="dark"] .pdf-preview-fixed embed {
+        background: #f5f5f5 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+        border-radius: 4px !important;
+    }
+
+    /* 确保PDF文本层在深色模式下可见 */
+    .pdf-preview-fixed .textLayer {
+        mix-blend-mode: normal !important;
+    }
+
+    /* 深色模式下PDF注释层 */
+    .pdf-preview-fixed .annotationLayer {
+        background: transparent !important;
+    }
+
+    /* 为PDF canvas添加一个包装器，用于精确控制背景大小 */
+    .pdf-preview-fixed .pdf-canvas-wrapper {
+        display: inline-block !important;
+        background: transparent !important;
+        position: relative !important;
+    }
+
+    /* 深色模式下canvas包装器背景 */
+    .dark .pdf-preview-fixed .pdf-canvas-wrapper,
+    [data-theme="dark"] .pdf-preview-fixed .pdf-canvas-wrapper,
+    body.dark .pdf-preview-fixed .pdf-canvas-wrapper {
+        background: #f5f5f5 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+        border-radius: 4px !important;
+        padding: 8px !important;
+        display: inline-block !important;
     }
 
     /* 重新布局 PDF 翻页控件：左右箭头居中悬浮，页码在底部居中 */
@@ -2345,6 +2457,8 @@ with gr.Blocks(
                             # 结果选择+预览
                             result_file_selector = gr.Dropdown(
                                 label=_("Select File to Preview/Download"),
+                                choices=[],
+                                value=None,
                                 visible=True,
                                 interactive=True,
                             )
@@ -3421,8 +3535,40 @@ with gr.Blocks(
         )
 
         # ADDED: Handle result selector change
+        def safe_update_preview(selected_label, state):
+            """
+            Wrapper for update_preview that ensures selected_label is valid before processing.
+            Also returns an update for result_file_selector if the value needs to be corrected.
+            """
+            # Validate selected_label is in choices
+            if not state or "display_map" not in state:
+                choices = []
+            else:
+                choices = list(state.get("display_map", {}).keys())
+            
+            # If selected_label is not in choices, reset it
+            if selected_label and selected_label not in choices:
+                # Reset to first available choice or None
+                corrected_label = choices[0] if choices else None
+                # Return preview update + selector update
+                preview_results = update_preview(corrected_label, state) if corrected_label else (
+                    None, None, None, None,
+                    gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)
+                )
+                return (
+                    *preview_results,
+                    gr.update(choices=choices, value=corrected_label, visible=bool(choices)),  # Fix selector
+                )
+            else:
+                # Normal case: selected_label is valid
+                preview_results = update_preview(selected_label, state)
+                return (
+                    *preview_results,
+                    gr.update(),  # No change to selector
+                )
+
         result_file_selector.change(
-            update_preview,
+            safe_update_preview,
             inputs=[result_file_selector, state],
             outputs=[
                 output_file_mono,  # Mono PDF file
@@ -3432,6 +3578,7 @@ with gr.Blocks(
                 output_file_mono,  # Visibility of mono output
                 output_file_dual,  # Visibility of dual output
                 output_file_glossary,
+                result_file_selector,  # Fix selector if value is invalid
             ],
         )
 
@@ -3722,108 +3869,207 @@ with gr.Blocks(
         # Use ui_setting_controls as outputs for page load
         demo.load(load_saved_config_to_ui, inputs=[state], outputs=ui_setting_controls)
 
+        # Initialize result_file_selector on page load to ensure choices and value are consistent
+        def init_result_file_selector(state):
+            """Initialize result_file_selector with empty choices and None value on page load."""
+            # Always start with empty state to avoid Gradio validation errors
+            # The actual choices will be populated when files are uploaded
+            try:
+                if not state or not state.get("display_map"):
+                    return gr.update(choices=[], value=None, visible=False)
+                choices = list(state.get("display_map", {}).keys())
+                if choices:
+                    # Ensure the value is in choices
+                    current_value = None
+                    # Try to preserve current selection if valid
+                    if state.get("display_map"):
+                        # Use first choice as default
+                        current_value = choices[0]
+                    return gr.update(choices=choices, value=current_value, visible=True)
+                else:
+                    return gr.update(choices=[], value=None, visible=False)
+            except Exception as e:
+                logger.warning(f"Error initializing result_file_selector: {e}")
+                # Fallback: always return safe empty state
+                return gr.update(choices=[], value=None, visible=False)
+
+        # Initialize result_file_selector FIRST on page load (before any other load handlers)
+        # This ensures it's always in a valid state
+        demo.load(
+            init_result_file_selector,
+            inputs=[state],
+            outputs=[result_file_selector],
+        )
+
         # JavaScript: 动态调整PDF canvas缩放，确保完全适配容器高度
+        # 使用兼容性更好的语法，避免 ES6 特性导致解析错误
         demo.load(
             None,
             None,
             None,
             js="""
-            // #region agent log
-            const __AGENT_LOG_ENDPOINT__ = 'http://127.0.0.1:7242/ingest/1ff7caba-bfc2-40e2-8c3f-ede50d4e1c77';
-            function __agentLog__(hypothesisId, message, data) {
+            (function() {
+                'use strict';
+
+            // Fix PDF worker URL - replace jsdelivr CDN with GitHub raw URL
+            function fixPDFWorkerURL() {
                 try {
-                    fetch(__AGENT_LOG_ENDPOINT__, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            sessionId: 'debug-session',
-                            runId: 'pre-fix',
-                            hypothesisId,
-                            location: 'pdf2zh_next/gui.py:demo.load(js)',
-                            message,
-                            data,
-                            timestamp: Date.now()
-                        })
-                    }).catch(()=>{});
-                } catch (e) {}
+                    var originalWorkerSrc = 'https://cdn.jsdelivr.net/gh/freddyaboulton/gradio-pdf@main/pdf.worker.min.mjs';
+                    var newWorkerSrc = 'https://raw.githubusercontent.com/freddyaboulton/gradio-pdf/main/pdf.worker.min.mjs';
+                    
+                    // Method 1: Override PDF.js GlobalWorkerOptions if available
+                    if (typeof window !== 'undefined') {
+                        if (window.pdfjsLib && window.pdfjsLib.GlobalWorkerOptions) {
+                            window.pdfjsLib.GlobalWorkerOptions.workerSrc = newWorkerSrc;
+                        }
+                        
+                        // Method 2: Use MutationObserver to intercept script execution
+                        var observer = new MutationObserver(function(mutations) {
+                            mutations.forEach(function(mutation) {
+                                mutation.addedNodes.forEach(function(node) {
+                                    if (node.nodeType === 1) { // Element node
+                                        if (node.tagName === 'SCRIPT') {
+                                            if (node.textContent && node.textContent.indexOf(originalWorkerSrc) !== -1) {
+                                                var escapedUrl = originalWorkerSrc.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
+                                                node.textContent = node.textContent.replace(new RegExp(escapedUrl, 'g'), newWorkerSrc);
+                                            }
+                                        }
+                                        // Also check for inline scripts in the node
+                                        var scripts = node.querySelectorAll && node.querySelectorAll('script');
+                                        if (scripts) {
+                                            for (var i = 0; i < scripts.length; i++) {
+                                                if (scripts[i].textContent && scripts[i].textContent.indexOf(originalWorkerSrc) !== -1) {
+                                                    var escapedUrl2 = originalWorkerSrc.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
+                                                    scripts[i].textContent = scripts[i].textContent.replace(new RegExp(escapedUrl2, 'g'), newWorkerSrc);
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                            });
+                        });
+                        observer.observe(document.body || document.documentElement, {
+                            childList: true,
+                            subtree: true
+                        });
+                        
+                        // Method 3: Intercept fetch requests for the worker file
+                        var originalFetch = window.fetch;
+                        window.fetch = function() {
+                            var url = arguments[0];
+                            if (typeof url === 'string' && url.indexOf(originalWorkerSrc) !== -1) {
+                                arguments[0] = url.replace(originalWorkerSrc, newWorkerSrc);
+                            }
+                            return originalFetch.apply(this, arguments);
+                        };
+                    }
+                } catch (e) {
+                    console.warn('Failed to fix PDF worker URL:', e);
+                }
             }
-            // #endregion agent log
+            
+            // Run fix immediately and also on DOM ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', fixPDFWorkerURL);
+            } else {
+                fixPDFWorkerURL();
+            }
 
             function adjustPDFCanvasScale() {
-                const previewContainers = document.querySelectorAll('.pdf-preview-fixed');
-                __agentLog__('A', 'adjustPDFCanvasScale: containers', { count: previewContainers.length });
-                previewContainers.forEach(container => {
-                    const canvas = container.querySelector('canvas');
+                    var previewContainers = document.querySelectorAll('.pdf-preview-fixed');
+                    for (var i = 0; i < previewContainers.length; i++) {
+                        var container = previewContainers[i];
+                        var canvas = container.querySelector('canvas');
                     if (!canvas) {
-                        __agentLog__('B', 'no canvas in container', {
-                            containerClass: container.className,
-                            children: Array.from(container.children || []).map(n => n.tagName + '.' + (n.className || ''))
-                        });
-                        return;
+                            continue;
                     }
                     
-                    const containerRect = container.getBoundingClientRect();
-                    const containerHeight = containerRect.height - 24; // 减去上下padding (12px * 2)
-                    const containerWidth = containerRect.width - 24;   // 减去左右padding (12px * 2)
-                    const cs = window.getComputedStyle(container);
-                    __agentLog__('A', 'container layout', {
-                        display: cs.display,
-                        position: cs.position,
-                        paddingTop: cs.paddingTop,
-                        paddingBottom: cs.paddingBottom,
-                        rect: { x: containerRect.x, y: containerRect.y, w: containerRect.width, h: containerRect.height }
-                    });
+                        var containerRect = container.getBoundingClientRect();
+                        var containerHeight = containerRect.height - 24;
+                        var containerWidth = containerRect.width - 24;
+                        
+                        var canvasWidth = canvas.naturalWidth || canvas.width || canvas.offsetWidth;
+                        var canvasHeight = canvas.naturalHeight || canvas.height || canvas.offsetHeight;
                     
-                    // 获取canvas的原始尺寸（从naturalWidth/naturalHeight或style）
-                    const canvasWidth = canvas.naturalWidth || canvas.width || canvas.offsetWidth;
-                    const canvasHeight = canvas.naturalHeight || canvas.height || canvas.offsetHeight;
-                    
-                    if (!canvasWidth || !canvasHeight) return;
-                    
-                    // 计算缩放比例：确保canvas完全适配容器，不被裁剪
-                    const scaleHeight = containerHeight / canvasHeight;
-                    const scaleWidth = containerWidth / canvasWidth;
-                    const scale = Math.min(scaleHeight, scaleWidth); // 取较小的比例，确保完整显示
-                    
-                    // 应用缩放
-                    const scaledWidth = canvasWidth * scale;
-                    const scaledHeight = canvasHeight * scale;
+                        if (!canvasWidth || !canvasHeight) {
+                            continue;
+                        }
+                        
+                        var scaleHeight = containerHeight / canvasHeight;
+                        var scaleWidth = containerWidth / canvasWidth;
+                        var scale = Math.min(scaleHeight, scaleWidth);
+                        
+                        var scaledWidth = canvasWidth * scale;
+                        var scaledHeight = canvasHeight * scale;
                     
                     canvas.style.width = scaledWidth + 'px';
                     canvas.style.height = scaledHeight + 'px';
                     canvas.style.maxWidth = '100%';
                     canvas.style.maxHeight = '100%';
-
-                    // 记录“文档预览”相关元素位置（用于定位跑偏原因）
-                    const docPreviewNodes = Array.from(document.querySelectorAll('*')).filter(n => (n.textContent || '').trim() === '文档预览');
-                    const labelNode = docPreviewNodes[0];
-                    if (labelNode) {
-                        const r = labelNode.getBoundingClientRect();
-                        __agentLog__('C', 'found 文档预览 node', {
-                            tag: labelNode.tagName,
-                            className: labelNode.className,
-                            inPdfPreviewFixed: !!labelNode.closest('.pdf-preview-fixed'),
-                            rect: { x: r.x, y: r.y, w: r.width, h: r.height }
-                        });
+                    
+                    // 深色模式下：为canvas添加包装器，使背景大小精确匹配PDF内容
+                    var bodyStyle = window.getComputedStyle(document.body);
+                    var bgColor = bodyStyle.backgroundColor;
+                    var isDarkMode = document.body.classList.contains('dark') || 
+                                     document.documentElement.getAttribute('data-theme') === 'dark' ||
+                                     document.documentElement.classList.contains('dark') ||
+                                     (bgColor && (bgColor.indexOf('rgb(30') === 0 || 
+                                                  bgColor.indexOf('rgb(31') === 0 || 
+                                                  bgColor.indexOf('rgb(32') === 0 ||
+                                                  bgColor.indexOf('#1') === 0 ||
+                                                  bgColor.indexOf('#2') === 0));
+                    
+                    if (isDarkMode) {
+                        // 检查是否已有包装器
+                        var wrapper = canvas.parentElement;
+                        var needsWrapper = !wrapper.classList || !wrapper.classList.contains('pdf-canvas-wrapper');
+                        
+                        if (needsWrapper && wrapper !== container) {
+                            // 创建包装器
+                            var newWrapper = document.createElement('div');
+                            newWrapper.className = 'pdf-canvas-wrapper';
+                            wrapper.insertBefore(newWrapper, canvas);
+                            newWrapper.appendChild(canvas);
+                            wrapper = newWrapper;
+                        } else if (wrapper === container || !wrapper.classList.contains('pdf-canvas-wrapper')) {
+                            // 如果canvas直接是container的子元素，创建包装器
+                            var newWrapper = document.createElement('div');
+                            newWrapper.className = 'pdf-canvas-wrapper';
+                            container.insertBefore(newWrapper, canvas);
+                            newWrapper.appendChild(canvas);
+                            wrapper = newWrapper;
+                        }
+                        
+                        // 设置包装器大小，稍微大一点以包含padding和阴影
+                        if (wrapper && wrapper.classList.contains('pdf-canvas-wrapper')) {
+                            wrapper.style.width = (scaledWidth + 16) + 'px';  // 8px padding * 2
+                            wrapper.style.height = (scaledHeight + 16) + 'px';
+                            wrapper.style.maxWidth = '100%';
+                            wrapper.style.maxHeight = '100%';
+                            wrapper.style.margin = '0 auto';
+                            wrapper.style.display = 'inline-block';
+                        }
+                        
+                        // 确保canvas本身没有额外的背景
+                        canvas.style.background = 'transparent';
                     } else {
-                        __agentLog__('C', 'no 文档预览 node found', {});
+                        // 浅色模式下移除包装器样式
+                        canvas.style.background = '#ffffff';
                     }
-                });
-            }
-            
-            // 页面加载时执行
+                    }
+                }
+                
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', adjustPDFCanvasScale);
             } else {
                 adjustPDFCanvasScale();
             }
             
-            // PDF内容更新时也执行（使用MutationObserver监听DOM变化）
-            const observer = new MutationObserver(adjustPDFCanvasScale);
+                var observer = new MutationObserver(adjustPDFCanvasScale);
             observer.observe(document.body, { childList: true, subtree: true });
             
-            // 窗口大小改变时重新调整
             window.addEventListener('resize', adjustPDFCanvasScale);
+            })();
             """
         )
 
