@@ -481,15 +481,18 @@ async def _translate_in_subprocess(
             # Check if the process crashed but no error was captured through IPC
             if translate_process.exitcode not in (0, None) and not cb.has_error():
                 error = SubprocessCrashError(
-                    f"Translation subprocess crashed with exit code {translate_process.exitcode}",
+                    f"Translation subprocess crashed with exit code "
+                    f"{translate_process.exitcode}",
                     exit_code=translate_process.exitcode,
                 )
                 # We need to raise the error as we're outside the async for loop now
                 raise error
             elif cb.has_error():
-                # If we have a stored error but haven't raised it yet (exited the loop normally)
+                # If we have a stored error but haven't raised it yet
+                # (exited the loop normally)
                 # re-raise it now
-                # Note: In most cases, this won't execute because the error would already have been
+                # Note: In most cases, this won't execute because the error
+                # would already have been
                 # raised by AsyncCallback.__anext__
                 raise cb.error
 
@@ -596,7 +599,7 @@ def create_babeldoc_config(settings: SettingsModel, file: Path) -> BabelDOCConfi
         primary_font_family=settings.translation.primary_font_family,
         only_include_translated_page=settings.pdf.only_include_translated_page,
         # BabelDOC v0.5.1 new options
-        merge_alternating_line_numbers=not settings.pdf.no_merge_alternating_line_numbers,
+        merge_alternating_line_numbers=not settings.pdf.no_merge_alternating_line_numbers,  # noqa: E501
         remove_non_formula_lines=not settings.pdf.no_remove_non_formula_lines,
         non_formula_line_iou_threshold=settings.pdf.non_formula_line_iou_threshold,
         figure_table_protection_threshold=settings.pdf.figure_table_protection_threshold,
@@ -742,7 +745,10 @@ async def do_translate_file_async(
                             if "main" in token_usage:
                                 main_usage = token_usage["main"]
                                 logger.info(
-                                    f"  Main Translator: Total {main_usage['total']}, Prompt {main_usage['prompt']}, Cache Hit Prompt {main_usage['cache_hit_prompt']}, Completion {main_usage['completion']}"
+                                    f"  Main Translator: Total {main_usage['total']}, "
+                                    f"Prompt {main_usage['prompt']}, "
+                                    f"Cache Hit Prompt {main_usage['cache_hit_prompt']}, "
+                                    f"Completion {main_usage['completion']}"
                                 )
                                 total_usage["total"] += main_usage["total"]
                                 total_usage["prompt"] += main_usage["prompt"]
@@ -753,7 +759,10 @@ async def do_translate_file_async(
                             if "term" in token_usage:
                                 term_usage = token_usage["term"]
                                 logger.info(
-                                    f"  Term Translator: Total {term_usage['total']}, Prompt {term_usage['prompt']}, Cache Hit Prompt {term_usage['cache_hit_prompt']}, Completion {term_usage['completion']}"
+                                    f"  Term Translator: Total {term_usage['total']}, "
+                                    f"Prompt {term_usage['prompt']}, "
+                                    f"Cache Hit Prompt {term_usage['cache_hit_prompt']}, "
+                                    f"Completion {term_usage['completion']}"
                                 )
                                 total_usage["total"] += term_usage["total"]
                                 total_usage["prompt"] += term_usage["prompt"]
@@ -762,7 +771,10 @@ async def do_translate_file_async(
                                 ]
                                 total_usage["completion"] += term_usage["completion"]
                             logger.info(
-                                f"  Total Token Usage: Total {total_usage['total']}, Prompt {total_usage['prompt']}, Cache Hit Prompt {total_usage['cache_hit_prompt']}, Completion {total_usage['completion']}"
+                                f"  Total Token Usage: Total {total_usage['total']}, "
+                                f"Prompt {total_usage['prompt']}, "
+                                f"Cache Hit Prompt {total_usage['cache_hit_prompt']}, "
+                                f"Completion {total_usage['completion']}"
                             )
                         break
                     if event["type"] == "error":
