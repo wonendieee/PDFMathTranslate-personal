@@ -16,6 +16,9 @@ from pdf2zh_next.config.translate_engine_model import TRANSLATION_ENGINE_SETTING
 
 log = logging.getLogger(__name__)
 
+# Document format support
+from pdf2zh_next.format import DocumentFormat, detect_document_format, validate_file_format
+
 # Very Important!
 # Only the following fields can be used for Field:
 # default
@@ -40,7 +43,11 @@ class BasicSettings(BaseModel):
     """Basic application settings"""
 
     input_files: set[str] = Field(
-        default=set(), description="Input PDF files to process"
+        default=set(), description="Input files to process (PDF, DOCX, DOC)"
+    )
+    input_format: DocumentFormat = Field(
+        default=DocumentFormat.PDF,
+        description="Input document format (pdf, docx, doc, auto)"
     )
     debug: bool = Field(default=False, description="Enable debug mode")
     gui: bool = Field(default=False, description="Enable GUI mode")
@@ -327,8 +334,24 @@ class SettingsModel(BaseModel):
             file_path = Path(file.strip("\"'"))
             if not file_path.exists():
                 raise ValueError(f"File does not exist: {file}")
-            if not file_path.suffix.lower() == ".pdf":
-                raise ValueError(f"File is not a PDF file: {file}")
+            # Determine format for validation
+            if self.basic.input_format == DocumentFormat.AUTO:
+                # Auto-detect format
+                try:
+                    detected_format = detect_document_format(file_path)
+                    log.debug(f"Auto-detected format for {file}: {detected_format}")
+                except ValueError as e:
+                    raise ValueError(f"Could not detect format for {file}: {e}")
+            else:
+                detected_format = self.basic.input_format
+
+            # Validate file format
+            try:
+                if not validate_file_format(file_path, detected_format):
+                    raise ValueError(f"File format validation failed for {file}")
+            except ValueError as e:
+                # Re-raise with more context
+                raise ValueError(f"Invalid file format for {file}: {e}")
 
         # Validate PDF output mode
         if self.pdf.no_dual and self.pdf.no_mono:

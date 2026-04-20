@@ -22,6 +22,7 @@ from babeldoc.main import create_progress_handler
 from rich.logging import RichHandler
 
 from pdf2zh_next.config.model import SettingsModel
+from pdf2zh_next.format import DocumentFormat, get_format_handler, detect_document_format
 from pdf2zh_next.translator import get_term_translator
 from pdf2zh_next.translator import get_translator
 from pdf2zh_next.utils import asynchronize
@@ -623,11 +624,36 @@ async def do_translate_async_stream(
     if not file.exists():
         raise FileNotFoundError(f"file {file} not found")
 
-    # 开始翻译
-    translate_func = partial(_translate_in_subprocess, settings, file)
+    # Determine document format
+    if settings.basic.input_format == DocumentFormat.AUTO:
+        try:
+            detected_format = detect_document_format(file)
+            logger.debug(f"Auto-detected format for {file}: {detected_format}")
+            format_type = detected_format
+        except ValueError as e:
+            raise ValueError(f"Could not detect format for {file}: {e}")
+    else:
+        format_type = settings.basic.input_format
+
+    # Get format handler and ensure PDF file
+    handler = get_format_handler(format_type)
+    temp_files = []
+    pdf_file = file
+
+    if format_type != DocumentFormat.PDF:
+        logger.info(f"Converting {format_type} document to PDF: {file}")
+        try:
+            pdf_file = await handler.convert_to_pdf(file)
+            temp_files.append(pdf_file)
+            logger.info(f"Converted to PDF: {pdf_file}")
+        except Exception as e:
+            raise ValueError(f"Failed to convert {format_type} document to PDF: {e}")
+
+    # Start translation
+    translate_func = partial(_translate_in_subprocess, settings, pdf_file)
 
     if settings.basic.debug:
-        babeldoc_config = create_babeldoc_config(settings, file)
+        babeldoc_config = create_babeldoc_config(settings, pdf_file)
         logger.debug("debug mode, translate in main process")
         translate_func = partial(babeldoc_translate, translation_config=babeldoc_config)
     else:
@@ -658,6 +684,11 @@ async def do_translate_async_stream(
         }
         yield error_event
         raise  # Re-raise the exception so that the caller can handle it if needed
+    finally:
+        # Clean up temporary files
+        if temp_files:
+            logger.debug(f"Cleaning up temporary files: {temp_files}")
+            handler.cleanup(temp_files)
 
 
 async def do_translate_file_async(

@@ -23,10 +23,10 @@ logger = logging.getLogger(__name__)
 
 def find_all_files_in_directory(directory_path):
     """
-    Recursively search all PDF files in the given directory and return their paths as a list.
+    Recursively search all supported document files (PDF, DOCX, DOC) in the given directory and return their paths as a list.
 
     :param directory_path: str, the path to the directory to search
-    :return: list of PDF file paths
+    :return: list of document file paths
     """
     directory_path = Path(directory_path)
     # Check if the provided path is a directory
@@ -38,8 +38,8 @@ def find_all_files_in_directory(directory_path):
     # Walk through the directory recursively
     for root, _, files in os.walk(directory_path):
         for file in files:
-            # Check if the file is a PDF
-            if file.lower().endswith(".pdf"):
+            # Check if the file is a supported document format
+            if file.lower().endswith((".pdf", ".docx", ".doc")):
                 # Append the full file path to the list
                 file_paths.append(Path(root) / file)
 

@@ -2334,7 +2334,7 @@ tech_details_string = f"""
 update_current_languages(settings.gui_settings.ui_lang)
 # The following code creates the GUI
 with gr.Blocks(
-    title="PDFMathTranslate - PDF Translation with preserved formats",
+    title="PDFMathTranslate - Document Translation with preserved formats (PDF, DOCX, DOC)",
     theme=gr.themes.Default(
         primary_hue=custom_blue, spacing_size="md", radius_size="lg"
     ),
@@ -2377,7 +2377,7 @@ with gr.Blocks(
                             file_input = gr.File(
                                 label=_("File(s)"),
                                 file_count="multiple",
-                                file_types=[".pdf", ".PDF"],
+                                file_types=[".pdf", ".PDF", ".docx", ".doc", ".DOCX", ".DOC"],
                                 type="filepath",
                                 elem_classes=["input-file"],
                             )
