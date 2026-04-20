@@ -27,9 +27,7 @@ from translator.config.model import SettingsModel
 from translator.config.translate_engine_model import GUI_PASSWORD_FIELDS
 from translator.config.translate_engine_model import GUI_SENSITIVE_FIELDS
 from translator.config.translate_engine_model import TERM_EXTRACTION_ENGINE_METADATA
-from translator.config.translate_engine_model import (
-    TERM_EXTRACTION_ENGINE_METADATA_MAP,
-)
+from translator.config.translate_engine_model import TERM_EXTRACTION_ENGINE_METADATA_MAP
 from translator.config.translate_engine_model import TRANSLATION_ENGINE_METADATA
 from translator.config.translate_engine_model import TRANSLATION_ENGINE_METADATA_MAP
 from translator.const import DEFAULT_CONFIG_DIR

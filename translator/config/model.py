@@ -8,9 +8,7 @@ from pathlib import Path
 from pydantic import BaseModel
 from pydantic import Field
 
-from translator.config.translate_engine_model import (
-    TERM_EXTRACTION_ENGINE_SETTING_TYPE,
-)
+from translator.config.translate_engine_model import TERM_EXTRACTION_ENGINE_SETTING_TYPE
 from translator.config.translate_engine_model import TRANSLATION_ENGINE_METADATA_MAP
 from translator.config.translate_engine_model import TRANSLATION_ENGINE_SETTING_TYPE
 from translator.format import DocumentFormat
@@ -44,11 +42,12 @@ class BasicSettings(BaseModel):
     """Basic application settings"""
 
     input_files: set[str] = Field(
-        default=set(), description="Input files to process (PDF, DOCX, DOC)"
+        default=set(),
+        description="Input files to process (PDF, DOCX, DOC, XLSX, XLS)",
     )
     input_format: DocumentFormat = Field(
-        default=DocumentFormat.PDF,
-        description="Input document format (pdf, docx, doc, auto)"
+        default=DocumentFormat.AUTO,
+        description="Input document format (pdf, docx, doc, xlsx, xls, auto)",
     )
     debug: bool = Field(default=False, description="Enable debug mode")
     gui: bool = Field(default=False, description="Enable GUI mode")

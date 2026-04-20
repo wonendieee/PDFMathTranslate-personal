@@ -1,8 +1,5 @@
 import logging
 
-from translator.config.model import SettingsModel
-from translator.engines.base_rate_limiter import BaseRateLimiter
-from translator.engines.base_translator import BaseTranslator
 from tenacity import before_sleep_log
 from tenacity import retry
 from tenacity import retry_if_exception
@@ -12,6 +9,9 @@ from tencentcloud.common import credential
 from tencentcloud.tmt.v20180321.models import TextTranslateRequest
 from tencentcloud.tmt.v20180321.models import TextTranslateResponse
 from tencentcloud.tmt.v20180321.tmt_client import TmtClient
+from translator.config.model import SettingsModel
+from translator.engines.base_rate_limiter import BaseRateLimiter
+from translator.engines.base_translator import BaseTranslator
 
 logger = logging.getLogger(__name__)
 

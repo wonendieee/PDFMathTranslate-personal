@@ -1,6 +1,5 @@
 """Tests for FormatHandler abstract base class."""
 import pytest
-
 from translator.format.base import DocumentFormat
 from translator.format.base import FormatHandler
 

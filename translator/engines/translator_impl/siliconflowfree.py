@@ -4,15 +4,15 @@ from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
 
 import httpx
-from translator.config.model import SettingsModel
-from translator.engines.base_rate_limiter import BaseRateLimiter
-from translator.engines.base_translator import BaseTranslator
-from translator.engines.rate_limiter.qps_rate_limiter import QPSRateLimiter
 from tenacity import before_sleep_log
 from tenacity import retry
 from tenacity import retry_if_exception_type
 from tenacity import stop_after_attempt
 from tenacity import wait_exponential
+from translator.config.model import SettingsModel
+from translator.engines.base_rate_limiter import BaseRateLimiter
+from translator.engines.base_translator import BaseTranslator
+from translator.engines.rate_limiter.qps_rate_limiter import QPSRateLimiter
 
 logger = logging.getLogger(__name__)
 

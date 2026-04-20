@@ -4,14 +4,14 @@ import re
 import unicodedata
 
 import requests
-from translator.config.model import SettingsModel
-from translator.engines.base_rate_limiter import BaseRateLimiter
-from translator.engines.base_translator import BaseTranslator
 from tenacity import before_sleep_log
 from tenacity import retry
 from tenacity import retry_if_exception_type
 from tenacity import stop_after_attempt
 from tenacity import wait_exponential
+from translator.config.model import SettingsModel
+from translator.engines.base_rate_limiter import BaseRateLimiter
+from translator.engines.base_translator import BaseTranslator
 
 logger = logging.getLogger(__name__)
 

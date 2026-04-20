@@ -7,11 +7,11 @@ from unittest.mock import patch
 
 import pytest
 import tomlkit
+from pydantic import BaseModel
+from pydantic import Field
 from translator.config.main import ConfigManager
 from translator.config.main import MagicDefault
 from translator.config.main import build_args_parser
-from pydantic import BaseModel
-from pydantic import Field
 
 
 class NestedModel(BaseModel):

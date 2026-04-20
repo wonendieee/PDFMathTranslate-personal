@@ -371,7 +371,7 @@ class TestCLIEnvSettingsModel:
         with pytest.raises(ValueError, match="File does not exist"):
             settings.validate_settings()
 
-        # Test non-PDF file
+        # Test unsupported extension (auto-detect cannot resolve .txt)
         non_pdf = tmp_path / "test.txt"
         non_pdf.touch()
         settings = CLIEnvSettingsModel(
@@ -379,7 +379,7 @@ class TestCLIEnvSettingsModel:
             openai_detail={"openai_api_key": "test-key"},
             basic={"input_files": {str(non_pdf)}},
         )
-        with pytest.raises(ValueError, match="File is not a PDF file"):
+        with pytest.raises(ValueError, match="Could not detect format"):
             settings.validate_settings()
 
     def test_parse_pages(self):
