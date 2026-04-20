@@ -61,7 +61,9 @@ class WordFormatHandler(FormatHandler):
                 if header.startswith(b"PK\x03\x04"):  # ZIP archive
                     # Check if it contains word/ directory
                     return self._is_docx_file(file_path)
-                elif header.startswith(b"\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1"):  # Compound File Binary
+                elif header.startswith(
+                    b"\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1"
+                ):  # Compound File Binary
                     return self._is_doc_file(file_path)
         except Exception:
             pass
@@ -115,12 +117,15 @@ class WordFormatHandler(FormatHandler):
 
         return False
 
-    async def convert_to_pdf(self, file_path: Path, output_path: Optional[Path] = None) -> Path:
+    async def convert_to_pdf(
+        self, file_path: Path, output_path: Optional[Path] = None
+    ) -> Path:
         """Convert a Word document to PDF.
 
         Args:
             file_path: Path to the Word document
-            output_path: Optional output path for PDF. If None, creates a temporary file.
+            output_path: Optional output path for PDF.
+                If None, creates a temporary file.
 
         Returns:
             Path to the converted PDF file
@@ -207,6 +212,8 @@ class WordFormatHandler(FormatHandler):
             try:
                 if temp_file.exists() and temp_file.is_file():
                     temp_file.unlink()
-                    logger.debug(f"Cleaned up temporary Word conversion file: {temp_file}")
+                    logger.debug(
+                        f"Cleaned up temporary Word conversion file: {temp_file}"
+                    )
             except Exception as e:
                 logger.warning(f"Failed to clean up temporary file {temp_file}: {e}")
