@@ -26,6 +26,7 @@ dependencies = [
     "xinference-client",
     "deepl",
     "openai>=1.0.0",
+    "deepl",
     "azure-ai-translation-text<=1.0.1",
     # 5.36 has a bug, webui starts with a white screen
     "gradio<5.36",
@@ -46,6 +47,7 @@ dependencies = [
     "gradio-i18n==0.3.4", # since we have hooked it for language selection
     "pyyaml>=6.0.2",
     "tomlkit",
+    "rapidocr",
 ]
 
 [dependency-groups]

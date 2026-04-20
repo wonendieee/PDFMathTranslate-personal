@@ -18,6 +18,7 @@ from pdf2zh_next.config import TencentSettings
 from pdf2zh_next.config import XinferenceSettings
 from pdf2zh_next.config import ZhipuSettings
 from pdf2zh_next.config.main import ConfigManager
+from pdf2zh_next.config.translate_engine_model import ClaudeCodeSettings
 from pdf2zh_next.config.model import BasicSettings
 from pdf2zh_next.config.model import PDFSettings
 from pdf2zh_next.config.model import SettingsModel
