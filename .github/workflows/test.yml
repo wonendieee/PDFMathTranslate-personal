@@ -1,0 +1,28 @@
+name: Test
+permissions:
+  contents: read
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+          activate-environment: true
+      - name: Install deps
+        run: uv sync
+      - name: Run pytest
+        run: uv run pytest -q

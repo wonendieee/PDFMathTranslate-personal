@@ -31,7 +31,7 @@ from translator.high_level import do_translate_file_async
 
 # from translator.high_level import translate, translate_stream
 
-__version__ = "2.8.2"
+__version__ = "0.1.0"
 __author__ = "Byaidu, awwaawwa"
 __license__ = "AGPL-3.0"
 __maintainer__ = "awwaawwa"

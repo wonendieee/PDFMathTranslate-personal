@@ -1,13 +1,13 @@
 [project]
-name = "translator"
-# NOTE: "translator" 在 PyPI 上已被占用, 仅限本地安装。发 PyPI 时改回或加后缀。
-version = "2.8.2"
-description = "PDF Translator based on BabelDOC"
+name = "doc-translator"
+# 基于 PDFMathTranslate-next / BabelDOC 的个人 fork，扩展支持 Word / Excel 文档翻译。
+version = "0.1.0"
+description = "文档翻译工具：支持 PDF / Word (.docx) / Excel (.xlsx) 的中英互译，PDF 部分基于 BabelDOC，Office 部分保持格式忠实回写。"
 authors = [
-    { name = "awwaawwa", email = "aw@funstory.ai" },
+    { name = "wonendieee" },
 ]
 maintainers = [
-    { name = "awwaawwa", email = "aw@funstory.ai" }
+    { name = "wonendieee" }
 ]
 license = "AGPL-3.0"
 readme = "README.md"
@@ -71,13 +71,15 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/PDFMathTranslate-next/PDFMathTranslate-next"
+Homepage = "https://github.com/wonendieee/PDFMathTranslate-personal"
+Upstream = "https://github.com/PDFMathTranslate-next/PDFMathTranslate-next"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project.scripts]
+doc-translator = "translator.main:cli"
 translator = "translator.main:cli"
 pdf2zh = "translator.main:cli"
 pdf2zh2 = "translator.main:cli"
@@ -90,7 +92,7 @@ max-line-length = 88
 
 
 [bumpver]
-current_version = "2.8.2"
+current_version = "0.1.0"
 version_pattern = "MAJOR.MINOR.PATCH[.PYTAGNUM]"
 
 [bumpver.file_patterns]

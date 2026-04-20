@@ -16,7 +16,7 @@ import babeldoc.assets.assets
 from translator.config import ConfigManager
 from translator.high_level import do_translate_file_async
 
-__version__ = "2.8.2"
+__version__ = "0.1.0"
 
 logger = logging.getLogger(__name__)
 
