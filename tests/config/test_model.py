@@ -1,12 +1,12 @@
 from pathlib import Path
 
 import pytest
-from pdf2zh_next.config.cli_env_model import CLIEnvSettingsModel
-from pdf2zh_next.config.model import BasicSettings
-from pdf2zh_next.config.model import PDFSettings
-from pdf2zh_next.config.model import TranslationSettings
-from pdf2zh_next.config.translate_engine_model import CLISettings
-from pdf2zh_next.config.translate_engine_model import OpenAISettings
+from translator.config.cli_env_model import CLIEnvSettingsModel
+from translator.config.model import BasicSettings
+from translator.config.model import PDFSettings
+from translator.config.model import TranslationSettings
+from translator.config.translate_engine_model import CLISettings
+from translator.config.translate_engine_model import OpenAISettings
 
 
 class TestBasicSettings:

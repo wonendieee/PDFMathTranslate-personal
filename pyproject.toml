@@ -1,5 +1,6 @@
 [project]
-name = "pdf2zh-next"
+name = "translator"
+# NOTE: "translator" 在 PyPI 上已被占用, 仅限本地安装。发 PyPI 时改回或加后缀。
 version = "2.8.2"
 description = "PDF Translator based on BabelDOC"
 authors = [
@@ -48,6 +49,9 @@ dependencies = [
     "pyyaml>=6.0.2",
     "tomlkit",
     "rapidocr",
+    "python-docx",
+    "openpyxl",
+    "lxml",
 ]
 
 [dependency-groups]
@@ -66,28 +70,18 @@ dev = [
     "mkdocs-static-i18n>=1.3.0",
 ]
 
-word = [
-    "python-docx>=1.1.2",
-    "pypandoc>=1.14",
-]
-
 [project.urls]
 Homepage = "https://github.com/PDFMathTranslate-next/PDFMathTranslate-next"
-
-[project.optional-dependencies]
-word = [
-    "python-docx>=1.1.2",
-    "pypandoc>=1.14",
-]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project.scripts]
-pdf2zh = "pdf2zh_next.main:cli"
-pdf2zh2 = "pdf2zh_next.main:cli"
-pdf2zh_next = "pdf2zh_next.main:cli"
+translator = "translator.main:cli"
+pdf2zh = "translator.main:cli"
+pdf2zh2 = "translator.main:cli"
+pdf2zh_next = "translator.main:cli"
 
 [tool.flake8]
 ignore = ["E203", "E261", "E501", "W503", "E741"]
@@ -104,13 +98,13 @@ version_pattern = "MAJOR.MINOR.PATCH[.PYTAGNUM]"
     'current_version = "{version}"',
     'version = "{version}"'
 ]
-"pdf2zh_next/__init__.py" = [
+"translator/__init__.py" = [
     '__version__ = "{version}"'
 ]
-"pdf2zh_next/const.py" = [
+"translator/const.py" = [
     '__version__ = "{version}"'
 ]
-"pdf2zh_next/main.py" = [
+"translator/main.py" = [
     '__version__ = "{version}"'
 ]
 
@@ -173,7 +167,7 @@ convention = "google"
 max-complexity = 10 # 函数圈复杂度阈值
 
 [tool.ruff.lint.per-file-ignores]
-"pdf2zh_next/gui.py" = ["S104"] # 忽略命名规范
+"translator/gui.py" = ["S104"] # 忽略命名规范
 "tests/*" = ["S101"]            # 在测试文件中允许 assert
 "**/__init__.py" = ["F401"]     # 允许未使用的导入
 "docs/*" = ["A001"]

@@ -257,7 +257,7 @@ jobs:
 
       # - name: Test show version (online mode)
       #   run: |
-      #     ./build/pdf2zh_next.exe --version
+      #     ./build/translator.exe --version
       
       - name: Test - Translate a PDF file with plain text only (online mode)
         run: |
