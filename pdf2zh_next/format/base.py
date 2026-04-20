@@ -50,12 +50,15 @@ class FormatHandler(ABC):
         pass
 
     @abstractmethod
-    async def convert_to_pdf(self, file_path: Path, output_path: Optional[Path] = None) -> Path:
+    async def convert_to_pdf(
+        self, file_path: Path, output_path: Optional[Path] = None
+    ) -> Path:
         """Convert a document to PDF format.
 
         Args:
             file_path: Path to the source document
-            output_path: Optional output path for PDF. If None, creates a temporary file.
+            output_path: Optional output path for PDF.
+                If None, creates a temporary file.
 
         Returns:
             Path to the converted PDF file

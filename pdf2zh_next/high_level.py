@@ -22,7 +22,8 @@ from babeldoc.main import create_progress_handler
 from rich.logging import RichHandler
 
 from pdf2zh_next.config.model import SettingsModel
-from pdf2zh_next.format import DocumentFormat, get_format_handler, detect_document_format
+from pdf2zh_next.format import DocumentFormat
+from pdf2zh_next.format import get_format_handler, detect_document_format
 from pdf2zh_next.translator import get_term_translator
 from pdf2zh_next.translator import get_translator
 from pdf2zh_next.utils import asynchronize

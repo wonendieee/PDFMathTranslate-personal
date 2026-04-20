@@ -13,7 +13,9 @@ logger = logging.getLogger(__name__)
 _FORMAT_HANDLERS: Dict[DocumentFormat, Type[FormatHandler]] = {}
 
 
-def register_format_handler(format_type: DocumentFormat, handler_class: Type[FormatHandler]) -> None:
+def register_format_handler(
+    format_type: DocumentFormat, handler_class: Type[FormatHandler]
+) -> None:
     """Register a format handler for a document format.
 
     Args:
@@ -21,7 +23,9 @@ def register_format_handler(format_type: DocumentFormat, handler_class: Type[For
         handler_class: The handler class
     """
     _FORMAT_HANDLERS[format_type] = handler_class
-    logger.debug(f"Registered format handler for {format_type}: {handler_class.__name__}")
+    logger.debug(
+        f"Registered format handler for {format_type}: {handler_class.__name__}"
+    )
 
 
 def get_format_handler(format_type: DocumentFormat) -> FormatHandler:
@@ -75,7 +79,9 @@ def detect_document_format(file_path: Path) -> DocumentFormat:
             if handler.detect_format(file_path):
                 return format_type
         except Exception as e:
-            logger.debug(f"Handler {handler_class.__name__} failed to detect format: {e}")
+            logger.debug(
+                f"Handler {handler_class.__name__} failed to detect format: {e}"
+            )
             continue
 
     raise ValueError(f"Could not detect document format for: {file_path}")

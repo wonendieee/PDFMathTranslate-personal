@@ -54,7 +54,9 @@ class PDFFormatHandler(FormatHandler):
             logger.debug(f"PDF validation failed for {file_path}: {e}")
             return False
 
-    async def convert_to_pdf(self, file_path: Path, output_path: Optional[Path] = None) -> Path:
+    async def convert_to_pdf(
+        self, file_path: Path, output_path: Optional[Path] = None
+    ) -> Path:
         """PDF files don't need conversion, return the original path."""
         if not self.validate_file(file_path):
             raise ValueError(f"Invalid PDF file: {file_path}")
