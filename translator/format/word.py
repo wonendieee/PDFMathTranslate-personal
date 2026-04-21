@@ -41,6 +41,7 @@ class WordTranslateResult:
     total_seconds: float
     mono_pdf_path: str | None = None
     dual_pdf_path: str | None = None
+    auto_extracted_glossary_path: str | None = None
 
     @property
     def original_pdf_path(self) -> str:
@@ -129,6 +130,7 @@ class WordFormatHandler(FormatHandler):
             original_path=str(input_file),
             translated_path=str(output_path),
             total_seconds=elapsed,
+            mono_pdf_path=str(output_path),
         )
 
         yield {
