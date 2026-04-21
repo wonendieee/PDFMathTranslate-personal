@@ -34,14 +34,18 @@ def get_translator(settings):
 
 @dataclass
 class WordTranslateResult:
-    """Mimics babeldoc TranslationResult shape for event consumers."""
+    """Mimics babeldoc TranslationResult shape for event consumers.
+
+    GUI 依赖 mono_pdf_path / dual_pdf_path / auto_extracted_glossary_path
+    是 Path | None (它会调用 .exists()), 因此这里保持 Path 类型。
+    """
 
     original_path: str
     translated_path: str
     total_seconds: float
-    mono_pdf_path: str | None = None
-    dual_pdf_path: str | None = None
-    auto_extracted_glossary_path: str | None = None
+    mono_pdf_path: Path | None = None
+    dual_pdf_path: Path | None = None
+    auto_extracted_glossary_path: Path | None = None
 
     @property
     def original_pdf_path(self) -> str:
@@ -130,7 +134,7 @@ class WordFormatHandler(FormatHandler):
             original_path=str(input_file),
             translated_path=str(output_path),
             total_seconds=elapsed,
-            mono_pdf_path=str(output_path),
+            mono_pdf_path=output_path,
         )
 
         yield {
