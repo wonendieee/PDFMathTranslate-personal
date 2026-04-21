@@ -619,6 +619,11 @@ def _build_translate_settings(
 
     # Update settings with UI values
     translate_settings.basic.input_files = {str(file_path)}
+    # GUI 不暴露格式选择, 统一走 auto-detect, 避免旧配置文件里残留的 input_format="pdf"
+    # 阻塞 docx/xlsx 上传
+    from translator.format.base import DocumentFormat
+
+    translate_settings.basic.input_format = DocumentFormat.AUTO
     translate_settings.report_interval = 0.2
     translate_settings.translation.lang_in = source_lang
     translate_settings.translation.lang_out = target_lang
