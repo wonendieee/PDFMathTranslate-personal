@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 from translator.format.base import DocumentFormat
 from translator.format.base import FormatHandler
 from translator.format.word_pipeline.collector import collect_translation_units
+from translator.format.word_pipeline.writer import apply_bilingual
 from translator.format.word_pipeline.writer import apply_translations
 from translator.office.batch_translator import OfficeBatchTranslator
 
@@ -117,8 +118,7 @@ class WordFormatHandler(FormatHandler):
 
         yield {"type": "progress", "overall_progress": 0.85, "stage": "translating"}
 
-        yield {"type": "progress", "overall_progress": 0.95, "stage": "writing"}
-        apply_translations(units, translations)
+        yield {"type": "progress", "overall_progress": 0.92, "stage": "writing"}
 
         output_dir = (
             Path(settings.translation.output)
@@ -126,15 +126,40 @@ class WordFormatHandler(FormatHandler):
             else input_file.parent
         )
         output_dir.mkdir(parents=True, exist_ok=True)
-        output_path = output_dir / f"{input_file.stem}.zh.docx"
-        doc.save(output_path)
+
+        # mono: translated-only (reuses the already-loaded document)
+        apply_translations(units, translations)
+        mono_path = output_dir / f"{input_file.stem}.zh.docx"
+        doc.save(mono_path)
+
+        # dual: original paragraph followed by translated clone.
+        # We reload the file to get pristine paragraph elements, then
+        # re-collect in the exact same visiting order (collector is
+        # deterministic) so indices align with `translations`.
+        yield {"type": "progress", "overall_progress": 0.97, "stage": "writing_dual"}
+        dual_doc = docx.Document(input_file)
+        dual_units = collect_translation_units(dual_doc)
+        if len(dual_units) != len(translations):
+            logger.warning(
+                "Dual collector produced %d units, expected %d; "
+                "bilingual output may be partially mis-aligned.",
+                len(dual_units),
+                len(translations),
+            )
+        apply_bilingual(
+            dual_units[: len(translations)],
+            translations[: len(dual_units)],
+        )
+        dual_path = output_dir / f"{input_file.stem}.dual.docx"
+        dual_doc.save(dual_path)
 
         elapsed = time.perf_counter() - start
         result = WordTranslateResult(
             original_path=str(input_file),
-            translated_path=str(output_path),
+            translated_path=str(mono_path),
             total_seconds=elapsed,
-            mono_pdf_path=output_path,
+            mono_pdf_path=mono_path,
+            dual_pdf_path=dual_path,
         )
 
         yield {

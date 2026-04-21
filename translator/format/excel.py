@@ -118,11 +118,7 @@ class XlsxFormatHandler(FormatHandler):
             translations = []
         yield {"type": "progress", "overall_progress": 0.85, "stage": "translating"}
 
-        yield {"type": "progress", "overall_progress": 0.95, "stage": "writing"}
-        for (ws_name, coord, _original), translated in zip(
-            targets, translations, strict=True
-        ):
-            wb[ws_name][coord].value = translated
+        yield {"type": "progress", "overall_progress": 0.92, "stage": "writing"}
 
         output_dir = (
             Path(settings.translation.output)
@@ -130,15 +126,47 @@ class XlsxFormatHandler(FormatHandler):
             else input_file.parent
         )
         output_dir.mkdir(parents=True, exist_ok=True)
-        output_path = output_dir / f"{input_file.stem}.zh.xlsx"
-        wb.save(output_path)
+
+        # mono: overwrite cell values with translated text (already loaded wb)
+        for (ws_name, coord, _original), translated in zip(
+            targets, translations, strict=True
+        ):
+            wb[ws_name][coord].value = translated
+        mono_path = output_dir / f"{input_file.stem}.zh.xlsx"
+        wb.save(mono_path)
+
+        # dual: reload pristine workbook and write "original\ntranslated"
+        # into the same cell with wrap_text=True. Inserting a full new
+        # column would shift coordinates and silently break formulas/
+        # merged-cell references in openpyxl, so we stay in-cell.
+        yield {"type": "progress", "overall_progress": 0.97, "stage": "writing_dual"}
+        from openpyxl.styles import Alignment
+
+        dual_wb = openpyxl.load_workbook(input_file)
+        for (ws_name, coord, original), translated in zip(
+            targets, translations, strict=True
+        ):
+            cell = dual_wb[ws_name][coord]
+            cell.value = f"{original}\n{translated}"
+            cur = cell.alignment
+            cell.alignment = Alignment(
+                horizontal=cur.horizontal if cur else None,
+                vertical=cur.vertical if cur else None,
+                text_rotation=cur.text_rotation if cur else 0,
+                wrap_text=True,
+                shrink_to_fit=cur.shrink_to_fit if cur else False,
+                indent=cur.indent if cur else 0,
+            )
+        dual_path = output_dir / f"{input_file.stem}.dual.xlsx"
+        dual_wb.save(dual_path)
 
         elapsed = time.perf_counter() - start
         result = ExcelTranslateResult(
             original_path=str(input_file),
-            translated_path=str(output_path),
+            translated_path=str(mono_path),
             total_seconds=elapsed,
-            mono_pdf_path=output_path,
+            mono_pdf_path=mono_path,
+            dual_pdf_path=dual_path,
         )
 
         yield {

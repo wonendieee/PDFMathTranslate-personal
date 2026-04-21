@@ -236,6 +236,58 @@ def get_page_choices():
     ]
 
 
+def _office_preview_placeholder() -> Path:
+    """Return a cached single-page PDF used as the preview placeholder for
+    non-PDF uploads (docx/xlsx).
+
+    gradio_pdf.PDF component only renders PDFs; we cannot preview Office
+    documents directly. Instead of leaving the viewer blank, substitute
+    this small placeholder so users see an explicit "no preview" message.
+    """
+    import tempfile
+
+    placeholder = Path(tempfile.gettempdir()) / "doc_translator_no_preview.pdf"
+    if placeholder.exists():
+        return placeholder
+    try:
+        import pymupdf  # type: ignore
+
+        doc = pymupdf.open()
+        page = doc.new_page(width=612, height=792)  # US Letter
+        page.insert_text(
+            (72, 360),
+            "Preview is not available for Office documents.",
+            fontsize=18,
+        )
+        page.insert_text(
+            (72, 400),
+            "Please use the download buttons on the left to get the result.",
+            fontsize=12,
+            color=(0.4, 0.4, 0.4),
+        )
+        doc.save(placeholder)
+        doc.close()
+    except Exception as e:  # pragma: no cover - pymupdf is a hard dep, belt+suspenders
+        logger.warning(f"Failed to build preview placeholder: {e}")
+    return placeholder
+
+
+_OFFICE_PREVIEW_SUFFIXES = {".docx", ".doc", ".xlsx", ".xls"}
+
+
+def _preview_path_for(path):
+    """Map a raw file path to something gradio_pdf.PDF can actually display."""
+    if not path:
+        return None
+    try:
+        suffix = Path(path).suffix.lower()
+    except Exception:
+        return path
+    if suffix in _OFFICE_PREVIEW_SUFFIXES:
+        return str(_office_preview_placeholder())
+    return path
+
+
 # Load configuration
 config_manager = ConfigManager()
 try:
@@ -1175,7 +1227,7 @@ async def translate_files(
 
         return (
             current_res["mono"],
-            preview_path,
+            _preview_path_for(preview_path),
             current_res["dual"],
             current_res["glossary"],
             gr.update(visible=bool(current_res["mono"])),
@@ -1511,7 +1563,7 @@ def update_preview(selected_label, state):
 
     return (
         mono_path,  # Download Mono Button Value
-        preview_path,  # PDF Preview Value (Critical Fix: Always return this if found)
+        _preview_path_for(preview_path),  # PDF Preview Value (Critical Fix: Always return this if found)
         dual_path,  # Download Dual Button Value
         glossary_path,  # Download Glossary Button Value
         gr.update(visible=bool(mono_path)),  # Mono Button Visibility
@@ -2337,7 +2389,7 @@ tech_details_string = f"""
 update_current_languages(settings.gui_settings.ui_lang)
 # The following code creates the GUI
 with gr.Blocks(
-    title="PDFMathTranslate - Document Translation with preserved formats (PDF, DOCX, DOC)",
+    title="doc-translator - PDF / DOCX / XLSX translation with preserved formats",
     theme=gr.themes.Default(
         primary_hue=custom_blue, spacing_size="md", radius_size="lg"
     ),
@@ -2350,7 +2402,13 @@ with gr.Blocks(
         render=False,
     )
     with Translate(get_translation_dic(translation_file_path), lang_selector):
-        gr.Markdown("# [PDFMathTranslate Next](https://pdf2zh-next.com)")
+        gr.Markdown(
+            '# [doc-translator](https://github.com/wonendieee/PDFMathTranslate-personal)'
+            ' <span style="font-size: 0.55em; color: #888; font-weight: normal;">'
+            'forked from '
+            '<a href="https://pdf2zh-next.com" style="color:#888;">PDFMathTranslate Next</a>'
+            "</span>"
+        )
 
         translation_engine_arg_inputs = []
         detail_text_inputs = []
