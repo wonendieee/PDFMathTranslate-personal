@@ -1191,7 +1191,7 @@ async def translate_files(
         state["parent_map"] = {}
 
     # Prepare output directory
-    output_dir = Path("pdf2zh_files") / session_id
+    output_dir = Path("output_files") / session_id
     output_dir.mkdir(parents=True, exist_ok=True)
 
     zip_path = output_dir / "all_translations.zip"
@@ -1843,6 +1843,67 @@ def on_file_input_change(files, state, selected_label):
     )
 
 
+def clear_caches():
+    """One-click cleanup of artifacts the GUI accumulates over time.
+
+    Targets, best-effort (failures per-item are reported, never fatal):
+      1. ``output_files/``   - per-session translated outputs (zh/dual/zip)
+      2. ``~/.cache/translator/cache.v1.db`` - translation-memory KV cache
+      3. ``<tmp>/gradio/``   - Gradio's upload staging dir
+
+    Items that are locked by an in-progress translation are skipped with
+    a warning, so users can safely press the button during idle time.
+    """
+    import shutil
+    import tempfile
+
+    def _size_mb(path: Path) -> float:
+        try:
+            if path.is_file():
+                return path.stat().st_size / 1024 / 1024
+            return sum(
+                f.stat().st_size for f in path.rglob("*") if f.is_file()
+            ) / 1024 / 1024
+        except Exception:
+            return 0.0
+
+    messages: list[str] = []
+
+    outputs_dir = Path("output_files")
+    if outputs_dir.exists():
+        size_mb = _size_mb(outputs_dir)
+        try:
+            shutil.rmtree(outputs_dir, ignore_errors=False)
+            messages.append(f"outputs {size_mb:.1f} MB")
+        except Exception as e:
+            logger.warning(f"Failed to clear {outputs_dir}: {e}")
+            shutil.rmtree(outputs_dir, ignore_errors=True)
+            messages.append(f"outputs (partial, {size_mb:.1f} MB)")
+
+    db_path = Path.home() / ".cache" / "translator" / "cache.v1.db"
+    if db_path.exists():
+        size_mb = _size_mb(db_path)
+        try:
+            db_path.unlink()
+            messages.append(f"translation memory {size_mb:.1f} MB")
+        except Exception as e:
+            logger.warning(f"Failed to drop cache db: {e}")
+
+    gradio_tmp = Path(tempfile.gettempdir()) / "gradio"
+    if gradio_tmp.exists():
+        size_mb = _size_mb(gradio_tmp)
+        try:
+            shutil.rmtree(gradio_tmp, ignore_errors=True)
+            messages.append(f"upload staging {size_mb:.1f} MB")
+        except Exception as e:
+            logger.warning(f"Failed to clear gradio tmp: {e}")
+
+    if messages:
+        gr.Info("Cleared: " + "; ".join(messages))
+    else:
+        gr.Info("Nothing to clean.")
+
+
 def save_config(
     *ui_args,
     progress=None,
@@ -1865,7 +1926,7 @@ def save_config(
     progress(0, desc=_("Saving configuration..."))
 
     # Prepare output directory
-    output_dir = Path("pdf2zh_files")
+    output_dir = Path("output_files")
 
     _build_translate_settings(
         settings.clone(), config_fake_pdf_path, output_dir, SaveMode.always, ui_inputs
@@ -2361,7 +2422,7 @@ _base_dir = Path.cwd().resolve()
 _drive_root = Path(_base_dir.anchor) if _base_dir.anchor else _base_dir
 pdf_preview_allowed_paths = [
     logo_path,
-    Path("pdf2zh_files").resolve(),  # translation outputs
+    Path("output_files").resolve(),  # translation outputs
     Path(tempfile.gettempdir()).resolve(),  # uploaded temp files
     _base_dir,  # current working directory
     _drive_root,  # drive root (Windows) or "/" (POSIX)
@@ -2515,6 +2576,11 @@ with gr.Blocks(
                                 )
                                 cancel_btn = gr.Button(
                                     _("Cancel"),
+                                    variant="secondary",
+                                    elem_classes=["action-btn", "action-btn-secondary"],
+                                )
+                                clear_cache_btn = gr.Button(
+                                    _("Clear Caches"),
                                     variant="secondary",
                                     elem_classes=["action-btn", "action-btn-secondary"],
                                 )
@@ -3654,6 +3720,10 @@ with gr.Blocks(
             stop_translate_file,
             inputs=[state],
         )
+
+        # Clear caches button: wipes session outputs, translation-memory DB
+        # and gradio upload staging. Side-effects only; no UI wiring needed.
+        clear_cache_btn.click(clear_caches)
 
         # Save button click handler
         save_btn.click(
