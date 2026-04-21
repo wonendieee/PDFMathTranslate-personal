@@ -173,4 +173,7 @@ cython_debug/
 uv.lock
 *.pdf
 *.docx
+*.xlsx
 CLAUDE.md
+# temporary commit message file used by the shell
+.git-commit-msg.tmp
